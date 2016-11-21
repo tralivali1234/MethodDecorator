@@ -3,12 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
-using MethodDecorator.Fody;
-
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 
-namespace MethodDecoratorEx.Fody {
+namespace MethodDecorator.Fody {
     public class MethodDecorator {
         private readonly ReferenceFinder _referenceFinder;
 
@@ -18,12 +16,12 @@ namespace MethodDecoratorEx.Fody {
 
         public void Decorate(TypeDefinition type, MethodDefinition method, CustomAttribute attribute) {
             method.Body.InitLocals = true;
-
+            
             var methodBaseTypeRef = this._referenceFinder.GetTypeReference(typeof(MethodBase));
 
             var exceptionTypeRef = this._referenceFinder.GetTypeReference(typeof(Exception));
             var parameterTypeRef = this._referenceFinder.GetTypeReference(typeof(object));
-            var parametersArrayTypeRef = this._referenceFinder.GetTypeReference(typeof(object[]));
+            var parametersArrayTypeRef = new ArrayType(parameterTypeRef);
 
             var methodVariableDefinition = AddVariableDefinition(method, "__fody$method", methodBaseTypeRef);
             var attributeVariableDefinition = AddVariableDefinition(method, "__fody$attribute", attribute.AttributeType);
@@ -49,7 +47,7 @@ namespace MethodDecoratorEx.Fody {
                 methodBodyFirstInstruction = method.Body.Instructions.First(i => i.OpCode == OpCodes.Call).Next;
             }
 
-            var initAttributeVariable = GetAttributeInstanceInstructions(processor,
+            var initAttributeVariable = this.GetAttributeInstanceInstructions(processor,
                                                                          attribute,
                                                                          method,
                                                                          attributeVariableDefinition,

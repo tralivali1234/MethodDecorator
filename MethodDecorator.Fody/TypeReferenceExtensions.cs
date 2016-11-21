@@ -1,15 +1,10 @@
 using System;
 using System.Linq;
 
-using MethodDecorator.Fody;
-
 using Mono.Cecil;
 
-namespace MethodDecoratorEx.Fody {
+namespace MethodDecorator.Fody {
     public static class TypeReferenceExtensions {
-        public static bool Implements<T>(this TypeDefinition typeDefinition) {
-            return typeDefinition.Implements(typeof(T));
-        }
 
         public static bool Implements(this TypeDefinition typeDefinition, System.Type type) {
             if (type.IsInterface == false) {
@@ -31,16 +26,6 @@ namespace MethodDecoratorEx.Fody {
             }
 
             return false;
-        }
-
-        public static bool DerivesFrom<T>(this TypeDefinition typeDefinition) {
-            return typeDefinition.DerivesFrom(typeof(T));
-        }
-
-        public static bool DerivesFrom(this TypeDefinition typeDefinition, System.Type type) {
-            var referenceFinder = new ReferenceFinder(typeDefinition.Module);
-            var baseTypeDefinition = referenceFinder.GetTypeReference(type);
-            return typeDefinition.DerivesFrom(baseTypeDefinition);
         }
 
         public static bool DerivesFrom(this TypeReference typeReference, TypeReference expectedBaseTypeReference) {

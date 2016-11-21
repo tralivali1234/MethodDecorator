@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-using MethodDecoratorEx.Fody;
+using MethodDecorator.Fody;
 
 using Mono.Cecil;
 
@@ -19,15 +19,24 @@ public class ModuleWeaver {
         this.LogInfo = s => { };
         this.LogWarning = s => { };
 
-        var decorator = new MethodDecoratorEx.Fody.MethodDecorator(this.ModuleDefinition);
+        var decorator = new MethodDecorator.Fody.MethodDecorator(this.ModuleDefinition);
 
         foreach (var x in this.ModuleDefinition.AssemblyReferences) AssemblyResolver.Resolve(x);
 
         this.DecorateDirectlyAttributed(decorator);
         this.DecorateAttributedByImplication(decorator);
+
+        if(this.ModuleDefinition.AssemblyReferences.Count(r => r.Name == "mscorlib") > 1) {
+            throw new Exception(
+                String.Format(
+                    "Error occured during IL weaving. The new assembly is now referencing more than one version of mscorlib: {0}",
+                    String.Join(", ", this.ModuleDefinition.AssemblyReferences.Where(r => r.Name == "mscorlib").Select(r => r.FullName))
+                )
+            );
+        }
     }
 
-    private void DecorateAttributedByImplication(MethodDecoratorEx.Fody.MethodDecorator decorator) {
+    private void DecorateAttributedByImplication(MethodDecorator.Fody.MethodDecorator decorator) {
         var inderectAttributes = this.ModuleDefinition.CustomAttributes
                                      .Concat(this.ModuleDefinition.Assembly.CustomAttributes)
                                      .Where(x => x.AttributeType.Name.StartsWith("IntersectMethodsMarkedByAttribute"))
@@ -52,7 +61,7 @@ public class ModuleWeaver {
         };
     }
 
-    private void DecorateDirectlyAttributed(MethodDecoratorEx.Fody.MethodDecorator decorator) {
+    private void DecorateDirectlyAttributed(MethodDecorator.Fody.MethodDecorator decorator) {
         var markerTypeDefinitions = this.FindMarkerTypes();
 
         var methods = this.FindAttributedMethods(markerTypeDefinitions.ToArray());
@@ -84,12 +93,16 @@ public class ModuleWeaver {
         res.AddRange(this.ModuleDefinition.CustomAttributes.Select(c => c.AttributeType.Resolve()));
         res.AddRange(this.ModuleDefinition.Assembly.CustomAttributes.Select(c => c.AttributeType.Resolve()));
 
-        //will find if assembly is loaded
-        var methodDecorator = Type.GetType("MethodDecoratorInterfaces.IMethodDecorator, MethodDecoratorInterfaces");
+        if (this.ModuleDefinition.Runtime >= TargetRuntime.Net_4_0) {
+            //will find if assembly is loaded
+            var methodDecorator = Type.GetType("MethodDecoratorInterfaces.IMethodDecorator, MethodDecoratorInterfaces");
 
-        //make using of MethodDecoratorEx assembly optional because it can break exists code
-        if (null != methodDecorator) 
-            res.AddRange(this.ModuleDefinition.Types.Where(c => c.Implements(methodDecorator)));
+            //make using of MethodDecoratorEx assembly optional because it can break exists code
+            if (null != methodDecorator) {
+                
+                res.AddRange(this.ModuleDefinition.Types.Where(c => c.Implements(methodDecorator)));
+            }
+        }
 
         return res;
     }
