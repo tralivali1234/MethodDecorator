@@ -1,15 +1,14 @@
-﻿using MethodDecorator.Fody.Tests;
+﻿public class ClassTestsBase : SimpleTestBase
+{
+    protected ClassTestsBase(string className)
+    {
+        this.className = className;
+    }
 
-namespace MethodDecoratorEx.Fody.Tests {
-    public class ClassTestsBase : SimpleTestBase {
-        protected ClassTestsBase(string className) {
-            this._className = className;
-        }
-        
-        private readonly string _className;
+    string className;
 
-        protected dynamic TestClass {
-            get { return this.Assembly.GetInstance(this._className); }
-        }
+    protected dynamic TestClass
+    {
+        get { return WeaverHelperWrapper.Assembly.GetInstance(className); }
     }
 }

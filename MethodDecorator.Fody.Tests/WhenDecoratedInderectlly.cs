@@ -1,13 +1,15 @@
 using Xunit;
 
-namespace MethodDecoratorEx.Fody.Tests {
-    public class WhenDecoratedInderectlly : ClassTestsBase {
-        public WhenDecoratedInderectlly() : base("SimpleTest.MarkedWithInderectAttribute") { }
+public class WhenDecoratedIndirectly : ClassTestsBase
+{
+    public WhenDecoratedIndirectly() : base("SimpleTest.MarkedWithIndirectAttribute")
+    {
+    }
 
-        [Fact]
-        public void ObsoleteDecorated() {
-            this.TestClass.ObsoleteDecorated();
-            this.CheckMethodSeq(new[] { Method.OnEnter, Method.Body, Method.OnExit });
-        }
+    [Fact]
+    public void ObsoleteDecorated()
+    {
+        TestClass.ObsoleteDecorated();
+        CheckMethodSeq(new[] {Method.OnEnter, Method.Body, Method.OnExit});
     }
 }

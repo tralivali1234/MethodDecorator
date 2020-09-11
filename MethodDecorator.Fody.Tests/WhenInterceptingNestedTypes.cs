@@ -1,32 +1,29 @@
-﻿using System.Reflection;
+﻿using Xunit;
 
-using MethodDecorator.Fody.Tests;
+public class WhenInterceptingNestedTypes : SimpleTestBase
+{
+    [Fact]
+    public void ShouldDecorateMethodInNestedType()
+    {
+        var testClass = WeaverHelperWrapper.Assembly.GetInstance("SimpleTest.InterceptingNestedTypes+Nested");
+        var value = testClass.StringMethod();
 
-using Xunit;
+        Assert.Equal("sausages", value);
 
-namespace MethodDecoratorEx.Fody.Tests {
-    public class WhenInterceptingNestedTypes : SimpleTestBase {
-        [Fact]
-        public void ShouldDecorateMethodInNestedType() {
-            dynamic testClass = this.Assembly.GetInstance("SimpleTest.InterceptingNestedTypes+Nested");
-            dynamic value = testClass.StringMethod();
+        CheckMethodSeq(new[] {Method.Init, Method.OnEnter, Method.OnExit});
+        CheckInit("SimpleTest.InterceptingNestedTypes+Nested", "SimpleTest.InterceptingNestedTypes+Nested.StringMethod");
+    }
 
-            Assert.Equal("sausages", value);
+    [Fact]
+    public void ShouldDecorateADeeplyNestedType()
+    {
+        var testClass =
+            WeaverHelperWrapper.Assembly.GetInstance("SimpleTest.InterceptingNestedTypes+FirstLevel+SecondLevel+DeeplyNested");
+        var value = testClass.NumberMethod();
 
-            this.CheckMethodSeq(new[] { Method.Init, Method.OnEnter, Method.OnExit });
-            this.CheckInit("SimpleTest.InterceptingNestedTypes+Nested", "SimpleTest.InterceptingNestedTypes+Nested.StringMethod");
-        }
+        Assert.Equal(42, value);
 
-        [Fact]
-        public void ShouldDecorateADeeplyNestedType() {
-            dynamic testClass =
-                this.Assembly.GetInstance("SimpleTest.InterceptingNestedTypes+FirstLevel+SecondLevel+DeeplyNested");
-            dynamic value = testClass.NumberMethod();
-
-            Assert.Equal(42, value);
-
-            this.CheckMethodSeq(new[] { Method.Init, Method.OnEnter, Method.OnExit });
-            this.CheckInit("SimpleTest.InterceptingNestedTypes+FirstLevel+SecondLevel+DeeplyNested", "SimpleTest.InterceptingNestedTypes+FirstLevel+SecondLevel+DeeplyNested.NumberMethod");
-        }
+        CheckMethodSeq(new[] {Method.Init, Method.OnEnter, Method.OnExit});
+        CheckInit("SimpleTest.InterceptingNestedTypes+FirstLevel+SecondLevel+DeeplyNested", "SimpleTest.InterceptingNestedTypes+FirstLevel+SecondLevel+DeeplyNested.NumberMethod");
     }
 }

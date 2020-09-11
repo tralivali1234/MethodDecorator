@@ -1,51 +1,30 @@
-using System.Reflection;
-
-using MethodDecorator.Fody.Tests;
-
 using Xunit;
 
-namespace MethodDecoratorEx.Fody.Tests {
-    public class WhenDecoratingByExternalInterceptor : TestsBase {
-        private static readonly Assembly _assembly;
-        private static readonly Assembly _externalAssembly;
+public class WhenDecoratingByExternalInterceptor : SimpleTestBase
+{
+    public WhenDecoratingByExternalInterceptor()
+    {
+        WeaverHelperWrapper.Assembly.GetStaticInstance("SimpleTest.TestRecords").Clear();
+        TestClass = WeaverHelperWrapper.Assembly.GetInstance("SimpleTest.MarkedFromAnotherAssembly");
+    }
 
-        static WhenDecoratingByExternalInterceptor() {
-            _assembly = CreateAssembly();
-            string path = _assembly.Location.Replace("SimpleTest2.dll", "AnotherAssemblyAttributeContainer.dll");
-            _externalAssembly = Assembly.LoadFile(path);
-        }
+    public dynamic TestClass { get; set; }
 
-        public WhenDecoratingByExternalInterceptor() {
-            _assembly.GetStaticInstance("SimpleTest.TestRecords").Clear();
-            _externalAssembly.GetStaticInstance("SimpleTest.TestRecords").Clear();
-            this.TestClass = _assembly.GetInstance("SimpleTest.MarkedFromAnotherAssembly");
-        }
+    [Fact]
+    public void ShouldNotifyOnInitModuleRegistered()
+    {
+        TestClass.ExternalInterceptorDecorated();
+        Assert.Equal(1, ExternalInterceptorAttribute.InitCount);
+        Assert.Equal("ExternalInterceptorDecorated", ExternalInterceptorAttribute.InitMethod.Name);
+        Assert.Equal("MarkedFromAnotherAssembly", ExternalInterceptorAttribute.InitInstance.GetType().Name);
+    }
 
-        public dynamic TestClass { get; set; }
-
-        [Fact]
-        public void ShouldNotifyOnInitModuleRegistered() {
-            this.TestClass.ExternalInterceptorDecorated();
-            this.CheckInit("SimpleTest.MarkedFromAnotherAssembly", "SimpleTest.MarkedFromAnotherAssembly.ExternalInterceptorDecorated");
-        }
-
-        [Fact]
-        public void ShouldNotifyOnInitAssemblyRegistered() {
-            this.TestClass.ExternalInterceptorAssemblyLevelDecorated();
-            this.CheckInit("SimpleTest.MarkedFromAnotherAssembly", "SimpleTest.MarkedFromAnotherAssembly.ExternalInterceptorAssemblyLevelDecorated");
-        }
-
-        protected override Assembly Assembly {
-            get { return _assembly; }
-        }
-
-        protected override dynamic RecordHost {
-            get { return _externalAssembly.GetStaticInstance("SimpleTest.TestRecords"); }
-        }
-
-        private static Assembly CreateAssembly() {
-            var weaverHelper = new WeaverHelper(@"SimpleTest\SimpleTest.csproj");
-            return weaverHelper.Weave();
-        }
+    [Fact]
+    public void ShouldNotifyOnInitAssemblyRegistered()
+    {
+        TestClass.ExternalInterceptorAssemblyLevelDecorated();
+        Assert.Equal(1, ExternalInterceptionAssemblyLevelAttribute.InitCount);
+        Assert.Equal("ExternalInterceptorAssemblyLevelDecorated", ExternalInterceptionAssemblyLevelAttribute.InitMethod.Name);
+        Assert.Equal("MarkedFromAnotherAssembly", ExternalInterceptionAssemblyLevelAttribute.InitInstance.GetType().Name);
     }
 }
